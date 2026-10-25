@@ -1,0 +1,24 @@
+[project]
+name = "hal-memory"
+version = "0.1.0"
+description = "Local-first long-term memory for AI agents. One SQLite file, every fact dated and sourced."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+mcp = ["mcp>=1.2"]
+fastembed = ["fastembed>=0.4"]
+dev = ["pytest"]
+
+[project.scripts]
+hal-memory = "hal_memory.cli:main"
+hal-memory-mcp = "hal_memory.mcp_server:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["hal_memory"]
