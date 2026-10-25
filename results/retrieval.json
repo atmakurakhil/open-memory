@@ -3,15 +3,15 @@
   "embedder": "nomic-embed-text",
   "arms": {
     "dense": {
-      "any@1": 90.64,
-      "all@1": 31.7,
-      "any@3": 97.02,
+      "any@1": 90.21,
+      "all@1": 31.49,
+      "any@3": 97.23,
       "all@3": 83.4,
       "any@5": 98.09,
       "all@5": 91.06,
       "any@10": 99.15,
       "all@10": 95.53,
-      "ndcg@10": 93.7,
+      "ndcg@10": 93.54,
       "by_type_all@5": {
         "single-session-user": 98.4,
         "multi-session": 90.1,
@@ -22,34 +22,34 @@
       }
     },
     "bm25": {
-      "any@1": 88.72,
-      "all@1": 30.64,
+      "any@1": 87.45,
+      "all@1": 30.21,
       "any@3": 95.11,
-      "all@3": 79.57,
-      "any@5": 97.45,
-      "all@5": 86.17,
+      "all@3": 79.36,
+      "any@5": 97.66,
+      "all@5": 86.38,
       "any@10": 98.94,
       "all@10": 92.77,
-      "ndcg@10": 91.46,
+      "ndcg@10": 91.07,
       "by_type_all@5": {
         "single-session-user": 100.0,
         "multi-session": 73.6,
-        "single-session-preference": 83.3,
+        "single-session-preference": 86.7,
         "temporal-reasoning": 78.7,
         "knowledge-update": 98.6,
         "single-session-assistant": 100.0
       }
     },
     "hybrid": {
-      "any@1": 92.34,
-      "all@1": 32.55,
+      "any@1": 92.55,
+      "all@1": 32.77,
       "any@3": 98.09,
       "all@3": 84.26,
       "any@5": 99.36,
       "all@5": 91.7,
       "any@10": 99.57,
       "all@10": 96.38,
-      "ndcg@10": 94.99,
+      "ndcg@10": 95.06,
       "by_type_all@5": {
         "single-session-user": 100.0,
         "multi-session": 87.6,
@@ -60,15 +60,15 @@
       }
     },
     "hybrid+time": {
-      "any@1": 92.98,
-      "all@1": 32.77,
+      "any@1": 93.19,
+      "all@1": 32.98,
       "any@3": 98.72,
       "all@3": 83.62,
       "any@5": 99.57,
       "all@5": 91.06,
       "any@10": 99.57,
       "all@10": 95.74,
-      "ndcg@10": 94.91,
+      "ndcg@10": 94.97,
       "by_type_all@5": {
         "single-session-user": 100.0,
         "multi-session": 87.6,

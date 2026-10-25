@@ -66,6 +66,15 @@ def test_time_window_boost():
     assert "lake" in hits[0]["text"]
 
 
+def test_present_tense_query_prefers_latest_event():
+    # learned out of order: the newer move arrives first, the old address second
+    m = mem()
+    m.add_document("I live in Bangalore now, moved in September.", occurred_at="2026-09-05")
+    m.add_document("I live in Hyderabad.", occurred_at="2020-01-01")
+    top = m.search("which city do I live in now", now="2026-10-25", k=2)["chunks"][0]
+    assert "Bangalore" in top["text"]
+
+
 def test_window_parser():
     now = parse_date("2023/05/30 (Tue) 23:40")
     s, e = window("what did I buy last week", now)

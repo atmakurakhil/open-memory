@@ -58,6 +58,7 @@ must not no yes so than then there here just also very too any some all each eve
 such only own same few both into over under again further once up down out off am s t don't i'm i've
 did tell remind know remember recall ever""".split())
 
+_NOW = re.compile(r"\b(now|currently|current|these days|nowadays|at the moment|still|latest)\b", re.I)
 _CJK = re.compile(r"[぀-ヿ㐀-鿿가-힯]")
 
 
@@ -370,6 +371,12 @@ class Memory:
                         d = parse_date(r["occurred_at"])
                         if d and win[0] <= d < win[1]:
                             fused[cid] *= 1.6
+                if not win and _NOW.search(query):
+                    # "where do I live now": among the close candidates, the latest event wins
+                    head = [c for c in sorted(fused, key=lambda c: -fused[c])[:10] if parse_date(rows[c]["occurred_at"])]
+                    head.sort(key=lambda c: parse_date(rows[c]["occurred_at"]), reverse=True)
+                    for i, cid in enumerate(head if len(head) > 1 else []):
+                        fused[cid] *= 1 + 0.1 * (1 - i / len(head))
                 ranked = sorted(fused, key=lambda c: -fused[c])
                 use_rr = rerank if rerank is not None else bool(self._rr_name)
                 if use_rr and self._reranker():
