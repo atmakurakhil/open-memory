@@ -246,7 +246,7 @@ class Memory:
 
     def extract_facts(self, source_id: str) -> list[int]:
         """LLM pass: pull durable facts out of a source, each keyed so later facts supersede.
-        Needs an llm (see hal_memory.llm). Facts always point back at the chunk they came from."""
+        Needs an llm (see open_memory.llm). Facts always point back at the chunk they came from."""
         if self.llm is None:
             raise MemoryError_("extract_facts needs an llm; pass Memory(llm=LLM(...))")
         src = self.db.execute("SELECT * FROM sources WHERE id=?", (source_id,)).fetchone()
@@ -451,7 +451,7 @@ class Memory:
         """Answer from memory with the configured LLM. Returns the answer plus the exact
         context it was given, so every answer can be checked against its sources."""
         if self.llm is None:
-            raise MemoryError_("ask needs an llm; set HAL_MEMORY_LLM=provider:model (your own key)")
+            raise MemoryError_("ask needs an llm; set OPEN_MEMORY_LLM=provider:model (your own key)")
         now_s = (parse_date(now) or datetime.now()).strftime("%Y-%m-%d %H:%M")
         ctx = self.context(question, space=space, k=k, now=now)
         raw = self.llm.chat(ASK_PROMPT.format(now=now_s, context=ctx or "(memory is empty)", question=question),

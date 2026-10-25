@@ -1,10 +1,10 @@
 """MCP server: plug the memory into Claude, Cursor, or any MCP client.
 
-  claude mcp add hal-memory -- /path/to/.venv/bin/python -m hal_memory.mcp_server
+  claude mcp add open-memory -- /path/to/.venv/bin/python -m open_memory.mcp_server
 
-Env: HAL_MEMORY_DB (default ~/.hal-memory/memory.db), HAL_MEMORY_EMBEDDER
-(default ollama:nomic-embed-text), HAL_MEMORY_SPACE (default "default"),
-HAL_MEMORY_LLM (optional provider:model for fact extraction, with your own key).
+Env: OPEN_MEMORY_DB (default ~/.open-memory/memory.db), OPEN_MEMORY_EMBEDDER
+(default ollama:nomic-embed-text), OPEN_MEMORY_SPACE (default "default"),
+OPEN_MEMORY_LLM (optional provider:model for fact extraction, with your own key).
 """
 from __future__ import annotations
 
@@ -19,12 +19,12 @@ except ImportError:  # mcp 1.x
 from .engine import Memory
 from .llm import from_spec
 
-DB = os.path.expanduser(os.environ.get("HAL_MEMORY_DB", "~/.hal-memory/memory.db"))
-SPACE = os.environ.get("HAL_MEMORY_SPACE", "default")
-mem = Memory(DB, embedder=os.environ.get("HAL_MEMORY_EMBEDDER", "ollama:nomic-embed-text"),
+DB = os.path.expanduser(os.environ.get("OPEN_MEMORY_DB", "~/.open-memory/memory.db"))
+SPACE = os.environ.get("OPEN_MEMORY_SPACE", "default")
+mem = Memory(DB, embedder=os.environ.get("OPEN_MEMORY_EMBEDDER", "ollama:nomic-embed-text"),
              cache_path=os.path.join(os.path.dirname(DB), "emb-cache.db"),
-             llm=from_spec(os.environ.get("HAL_MEMORY_LLM", "")))
-app = FastMCP("hal-memory")
+             llm=from_spec(os.environ.get("OPEN_MEMORY_LLM", "")))
+app = FastMCP("open-memory")
 
 
 @app.tool()
@@ -49,7 +49,7 @@ def memory_add(text: str, title: str = "", occurred_at: str = "") -> str:
 @app.tool()
 def memory_add_conversation(turns_json: str, occurred_at: str = "", extract: bool = False) -> str:
     """Save a conversation: JSON list of {"role": "user"|"assistant", "content": "..."}. With extract=true and
-    HAL_MEMORY_LLM set, durable facts are pulled out and keyed so later facts retire earlier ones."""
+    OPEN_MEMORY_LLM set, durable facts are pulled out and keyed so later facts retire earlier ones."""
     sid = mem.add_conversation(json.loads(turns_json), space=SPACE, occurred_at=occurred_at or None,
                                extract=extract and mem.llm is not None)
     return json.dumps({"source": sid, **mem.stats(SPACE)})

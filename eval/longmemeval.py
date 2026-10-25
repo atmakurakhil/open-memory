@@ -24,9 +24,9 @@ from collections import defaultdict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
-from hal_memory.embed import OllamaEmbedder  # noqa: E402
-from hal_memory.engine import Memory, focus  # noqa: E402
-from hal_memory.llm import LLM  # noqa: E402
+from open_memory.embed import OllamaEmbedder  # noqa: E402
+from open_memory.engine import Memory, focus  # noqa: E402
+from open_memory.llm import LLM  # noqa: E402
 
 ARMS = {
     "dense": dict(weights=(1.0, 0.0, 0.0), time=False, rerank=False),

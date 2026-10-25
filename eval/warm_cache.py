@@ -8,8 +8,8 @@ import time
 
 sys.path.insert(0, __file__.rsplit("/eval/", 1)[0])
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
-from hal_memory.chunk import rounds  # noqa: E402
-from hal_memory.embed import OllamaEmbedder  # noqa: E402
+from open_memory.chunk import rounds  # noqa: E402
+from open_memory.embed import OllamaEmbedder  # noqa: E402
 
 data = json.load(open(sys.argv[1]))
 if "--qa-first" in sys.argv:  # embed the QA sample's haystacks before the rest

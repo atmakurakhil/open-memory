@@ -2,9 +2,9 @@
 import os
 import tempfile
 
-from hal_memory.embed import HashEmbedder
-from hal_memory.engine import Memory
-from hal_memory.timeparse import window, parse_date
+from open_memory.embed import HashEmbedder
+from open_memory.engine import Memory
+from open_memory.timeparse import window, parse_date
 
 
 def mem():
@@ -105,7 +105,7 @@ def test_spaces_are_isolated():
 
 
 def test_detail_deep_in_long_assistant_reply_is_its_own_chunk():
-    from hal_memory.chunk import rounds
+    from open_memory.chunk import rounds
     long = "\n\n".join(f"Section {i}: generic advice about campaigns." * 3 for i in range(30))
     long += "\n\nInfluencer marketing budget: $2,000."
     rs = rounds([{"role": "user", "content": "plan my campaign"}, {"role": "assistant", "content": long}],
@@ -115,7 +115,7 @@ def test_detail_deep_in_long_assistant_reply_is_its_own_chunk():
 
 
 def test_focus_keeps_the_matching_line():
-    from hal_memory.engine import focus
+    from open_memory.engine import focus
     text = "[user] q\n" + "filler words here\n" * 200 + "Influencer marketing: $2,000\n" + "more filler\n" * 200
     out = focus(text, "how much for influencer marketing", 400)
     assert "$2,000" in out and len(out) <= 450
@@ -123,8 +123,8 @@ def test_focus_keeps_the_matching_line():
 
 def test_ask_without_llm_says_how_to_configure():
     import pytest
-    from hal_memory.engine import MemoryError_
-    with pytest.raises(MemoryError_, match="HAL_MEMORY_LLM"):
+    from open_memory.engine import MemoryError_
+    with pytest.raises(MemoryError_, match="OPEN_MEMORY_LLM"):
         mem().ask("anything")
 
 
@@ -141,7 +141,7 @@ def test_ask_passes_dated_context_to_your_llm():
 
 def test_provider_spec_requires_your_own_key(monkeypatch):
     import pytest
-    from hal_memory.llm import from_spec
+    from open_memory.llm import from_spec
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     with pytest.raises(ValueError, match="OPENAI_API_KEY"):
         from_spec("openai:gpt-5-mini")

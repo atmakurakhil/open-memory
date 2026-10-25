@@ -1,4 +1,4 @@
-# hal-memory
+# open-memory
 
 Long-term memory for AI agents that you can read, edit, and take with you.
 One SQLite file on your machine. Every fact is dated and points to the words it came from.
@@ -85,19 +85,19 @@ The weakest type is temporal reasoning (82.7 all@5); multi-session is 87.6. Raw 
 pip install -e ".[mcp]"
 ollama pull nomic-embed-text            # local embeddings; or use fastembed:<model>
 
-hal-memory remember "I live in Hyderabad" --key user.city --since 2020-01-01
-hal-memory remember "I moved to Bangalore" --key user.city --since 2026-09-01
-hal-memory profile                      # only Bangalore is current
-hal-memory history user.city            # both, with their windows
-hal-memory add "meeting notes ..." --date 2026-10-20
-hal-memory search "where do I live"
-hal-memory export ./my-memory           # plain markdown, yours
+open-memory remember "I live in Hyderabad" --key user.city --since 2020-01-01
+open-memory remember "I moved to Bangalore" --key user.city --since 2026-09-01
+open-memory profile                      # only Bangalore is current
+open-memory history user.city            # both, with their windows
+open-memory add "meeting notes ..." --date 2026-10-20
+open-memory search "where do I live"
+open-memory export ./my-memory           # plain markdown, yours
 ```
 
 As an MCP server for Claude Code, Claude Desktop, Cursor:
 
 ```bash
-claude mcp add hal-memory -- /path/to/.venv/bin/python -m hal_memory.mcp_server
+claude mcp add open-memory -- /path/to/.venv/bin/python -m open_memory.mcp_server
 ```
 
 Tools: `memory_search`, `memory_context`, `memory_add`, `memory_remember`, `memory_forget`,
@@ -106,8 +106,8 @@ Tools: `memory_search`, `memory_context`, `memory_add`, `memory_remember`, `memo
 From Python:
 
 ```python
-from hal_memory.engine import Memory
-from hal_memory.llm import LLM
+from open_memory.engine import Memory
+from open_memory.llm import LLM
 
 m = Memory("me.db", llm=LLM("openai/gpt-oss-120b", provider="groq"))
 m.add_conversation(turns, occurred_at="2026-10-25", extract=True)

@@ -1,10 +1,10 @@
-"""hal-memory command line.
+"""open-memory command line.
 
-  hal-memory add "note text" [--title T]       hal-memory search "query"
-  hal-memory remember "fact" --key user.city   hal-memory forget fact:12
-  hal-memory profile                           hal-memory history user.city
-  hal-memory export ./out                      hal-memory stats
-  hal-memory --llm openai:gpt-5-mini ask "what's my 5k best?"   (your own key, from the environment)
+  open-memory add "note text" [--title T]       open-memory search "query"
+  open-memory remember "fact" --key user.city   open-memory forget fact:12
+  open-memory profile                           open-memory history user.city
+  open-memory export ./out                      open-memory stats
+  open-memory --llm openai:gpt-5-mini ask "what's my 5k best?"   (your own key, from the environment)
 """
 from __future__ import annotations
 
@@ -18,11 +18,11 @@ from .llm import from_spec
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="hal-memory")
-    ap.add_argument("--db", default=os.path.expanduser(os.environ.get("HAL_MEMORY_DB", "~/.hal-memory/memory.db")))
-    ap.add_argument("--space", default=os.environ.get("HAL_MEMORY_SPACE", "default"))
-    ap.add_argument("--embedder", default=os.environ.get("HAL_MEMORY_EMBEDDER", "ollama:nomic-embed-text"))
-    ap.add_argument("--llm", default=os.environ.get("HAL_MEMORY_LLM", ""),
+    ap = argparse.ArgumentParser(prog="open-memory")
+    ap.add_argument("--db", default=os.path.expanduser(os.environ.get("OPEN_MEMORY_DB", "~/.open-memory/memory.db")))
+    ap.add_argument("--space", default=os.environ.get("OPEN_MEMORY_SPACE", "default"))
+    ap.add_argument("--embedder", default=os.environ.get("OPEN_MEMORY_EMBEDDER", "ollama:nomic-embed-text"))
+    ap.add_argument("--llm", default=os.environ.get("OPEN_MEMORY_LLM", ""),
                     help="provider:model for ask/extract, using your own key (e.g. openai:gpt-5-mini, ollama:llama3.2)")
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("add"); p.add_argument("text"); p.add_argument("--title"); p.add_argument("--date")

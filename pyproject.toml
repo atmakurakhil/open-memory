@@ -1,5 +1,5 @@
 [project]
-name = "hal-memory"
+name = "open-memory"
 version = "0.1.0"
 description = "Local-first long-term memory for AI agents. One SQLite file, every fact dated and sourced."
 readme = "README.md"
@@ -13,12 +13,12 @@ fastembed = ["fastembed>=0.4"]
 dev = ["pytest"]
 
 [project.scripts]
-hal-memory = "hal_memory.cli:main"
-hal-memory-mcp = "hal_memory.mcp_server:main"
+open-memory = "open_memory.cli:main"
+open-memory-mcp = "open_memory.mcp_server:main"
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["hal_memory"]
+packages = ["open_memory"]

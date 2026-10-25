@@ -63,7 +63,7 @@ class LLM:
                                          headers={"Content-Type": "application/json",
                                                   "Authorization": f"Bearer {self.key}",
                                                   # Cloudflare-fronted APIs reject urllib's default UA (1010)
-                                                  "User-Agent": "hal-memory/0.1"})
+                                                  "User-Agent": "open-memory/0.1"})
             try:
                 with urllib.request.urlopen(req, timeout=300) as r:
                     data = json.load(r)
