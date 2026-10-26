@@ -156,3 +156,17 @@ def test_provider_spec_requires_your_own_key(monkeypatch):
         from_spec("openai:gpt-5-mini")
     assert from_spec("ollama:llama3.2").base.startswith("http://localhost")
     assert from_spec("") is None
+
+
+def test_viewer_graph_links_facts_to_sources_and_versions():
+    from open_memory.ui import graph, note
+    m = mem()
+    sid = m.add_document("I live in Pune.", occurred_at="2026-03-01")
+    cid = m.db.execute("SELECT id FROM chunks WHERE source_id=?", (sid,)).fetchone()[0]
+    old = m.remember("Lives in Pune", key="user.city", valid_from="2026-03-01", chunk_id=cid)
+    new = m.remember("Lives in Bangalore", key="user.city", valid_from="2026-07-28")
+    g = graph(m, "default")
+    kinds = {(e["a"], e["b"], e["kind"]) for e in g["edges"]}
+    assert (f"fact:{old}", f"source:{sid}", "from") in kinds
+    assert (f"fact:{old}", f"fact:{new}", "replaced") in kinds
+    assert [h["text"] for h in note(m, "default", f"fact:{old}")["history"]] == ["Lives in Pune", "Lives in Bangalore"]

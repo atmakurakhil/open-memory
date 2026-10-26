@@ -22,3 +22,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = ["open_memory"]
+
+[tool.setuptools.package-data]
+open_memory = ["ui.html"]

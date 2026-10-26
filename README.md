@@ -118,6 +118,18 @@ open-memory search "where do I live"
 open-memory export ./my-memory           # plain markdown, yours
 ```
 
+### See your memory
+
+```bash
+open-memory ui                          # opens http://127.0.0.1:7878
+python examples/demo_memory.py demo.db  # or try it on a made-up person first
+open-memory --db demo.db ui
+```
+
+A local viewer in the spirit of Obsidian: every note and fact in a list, a reading pane, and a graph where facts link to
+the note they came from, a replaced fact links to the one that replaced it, and related notes link by meaning. Click
+anything to open it; edit or forget a fact from the page. It runs on your machine only and fetches nothing.
+
 As an MCP server for Claude Code, Claude Desktop, Cursor:
 
 ```bash

@@ -88,13 +88,37 @@ Session-level recall: *any@5* = at least one evidence session in the top 5; *all
 
 | Mode | any@1 | any@5 | all@5 | all@10 | NDCG@10 |
 |---|---|---|---|---|---|
-| dense only | 90.6 | 98.1 | 91.1 | 95.5 | 93.7 |
-| BM25 only | 88.7 | 97.4 | 86.2 | 92.8 | 91.5 |
-| **hybrid (default)** | **92.3** | **99.4** | **91.7** | **96.4** | **95.0** |
-| hybrid + time window | 93.0 | 99.6 | 91.1 | 95.7 | 94.9 |
+| dense only | 90.2 | 98.1 | 91.1 | 95.5 | 93.5 |
+| BM25 only | 87.4 | 97.7 | 86.4 | 92.8 | 91.1 |
+| **hybrid (default)** | **92.6** | **99.4** | **91.7** | **96.4** | **95.1** |
+| hybrid + time window | 93.2 | 99.6 | 91.1 | 95.7 | 95.0 |
 
 Hybrid wins on every column but one. The time-window boost helps the top hit and costs 0.6 on *all@5*, so it stays a soft boost.
 The weakest type is temporal reasoning (82.7 all@5); multi-session is 87.6. Raw output: `results/retrieval.json`.
+
+## Head to head with Supermemory
+
+Supermemory ships a free local server (`supermemory-server`, v0.0.9). `eval/head_to_head.py` feeds it and this engine the
+same notes and asks the same questions through its public API. Each case is a failure its users have reported.
+Supermemory ran with `gemma3:4b` through Ollama for its extraction step; their hosted product uses its own models, so treat
+this as a test of the local server, not the cloud.
+
+| Case | Supermemory Local | open-memory |
+|---|---|---|
+| Searchable the moment `add` returns | no (about 2 s later) | yes |
+| Newer fact wins when learned out of order ("where do I live now") | yes | yes |
+| Chinese text | no (found by raw document search only) | yes |
+| Japanese text | no | yes |
+| Typo in the query | yes | yes |
+| Exact code lookup (a PNR) | yes | yes |
+| "What did I do last Saturday" | yes | yes |
+| Counting across sessions: all 4 purchases in the top 5 | 0 of 4 (empty result for "...this month") | 4 of 4 |
+| Detail buried in a long assistant reply | yes | yes |
+| Deleted means gone | yes | yes |
+
+Ten small cases written by the author of this engine, so read it as a probe, not a benchmark. The out-of-order case was the
+one this engine lost on the first run; the fix (prefer the latest event when the query says "now", "currently" and similar)
+also raised top-1 retrieval on LongMemEval from 92.3 to 92.6.
 
 ## Use it
 

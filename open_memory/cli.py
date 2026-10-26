@@ -4,6 +4,7 @@
   open-memory remember "fact" --key user.city   open-memory forget fact:12
   open-memory profile                           open-memory history user.city
   open-memory export ./out                      open-memory stats
+  open-memory ui                                (a local viewer: notes, facts, graph)
   open-memory --llm openai:gpt-5-mini ask "what's my 5k best?"   (your own key, from the environment)
 """
 from __future__ import annotations
@@ -37,11 +38,16 @@ def main(argv=None):
     p = sub.add_parser("history"); p.add_argument("key")
     p = sub.add_parser("export"); p.add_argument("dir")
     sub.add_parser("stats")
+    p = sub.add_parser("ui", help="open the memory viewer in your browser")
+    p.add_argument("--port", type=int, default=7878); p.add_argument("--no-open", action="store_true")
     a = ap.parse_args(argv)
     if a.cmd == "add" and a.text == "-":
         a.text = sys.stdin.read()
     m = Memory(a.db, embedder=a.embedder, cache_path=os.path.join(os.path.dirname(a.db), "emb-cache.db"),
                llm=from_spec(a.llm))
+    if a.cmd == "ui":
+        from .ui import serve
+        return serve(m, space=a.space, port=a.port, open_browser=not a.no_open)
     out = {
         "add": lambda: {"source": m.add_document(a.text, space=a.space, title=a.title, occurred_at=a.date,
                                                  extract=a.extract)},

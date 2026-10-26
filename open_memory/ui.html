@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>open-memory</title>
+<style>
+:root {
+  --bg: #1e1e1e; --panel: #252525; --line: #333; --text: #dcddde; --mute: #8a8a8a; --faint: #555;
+  --accent: #ff6a2c; --accent-soft: rgba(255,106,44,.16); --node: #b9bcc2; --conv: #8fb4ff;
+  --edge: rgba(200,200,200,.12); --edge-hot: rgba(255,106,44,.55);
+}
+html.light { --bg: #ffffff; --panel: #f6f6f6; --line: #e3e3e3; --text: #222; --mute: #6b6b6b; --faint: #bbb;
+    --accent: #e0561c; --accent-soft: rgba(224,86,28,.12); --node: #6d7078; --conv: #3f6fd8;
+    --edge: rgba(0,0,0,.10); --edge-hot: rgba(224,86,28,.6); }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+  font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif; }
+#app { display: grid; grid-template-columns: 270px 1fr auto; height: 100vh; }
+aside { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
+.brand { padding: 14px 16px 6px; font-weight: 600; letter-spacing: .2px; display: flex; align-items: center; gap: 8px; }
+.brand i { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); display: inline-block; }
+.stats { padding: 0 16px 10px; color: var(--mute); font-size: 12px; }
+.search { margin: 0 12px 10px; }
+.search input { width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--text); outline: none; font: inherit; }
+.search input:focus { border-color: var(--accent); }
+.tabs { display: flex; gap: 2px; padding: 0 12px 8px; }
+.tabs button { flex: 1; padding: 5px 0; border: 0; border-radius: 5px; background: transparent; color: var(--mute);
+  font: inherit; font-size: 12px; cursor: pointer; }
+.tabs button.on { background: var(--accent-soft); color: var(--text); }
+.list { overflow: auto; flex: 1; padding: 0 6px 12px; }
+.item { padding: 6px 10px; border-radius: 5px; cursor: pointer; display: flex; gap: 8px; align-items: baseline; }
+.item:hover { background: rgba(127,127,127,.12); }
+.item.on { background: var(--accent-soft); }
+.item .t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .d { color: var(--mute); font-size: 11px; white-space: nowrap; }
+.item .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; transform: translateY(-1px); }
+.item.old .t { text-decoration: line-through; color: var(--mute); }
+.group { color: var(--mute); font-size: 11px; text-transform: uppercase; letter-spacing: .6px; padding: 10px 10px 4px; }
+main { position: relative; min-width: 0; }
+canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+canvas.drag { cursor: grabbing; }
+.legend { position: absolute; left: 14px; bottom: 12px; color: var(--mute); font-size: 12px; display: flex; gap: 14px; flex-wrap: wrap; }
+.legend span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: var(--c); }
+.hint { position: absolute; right: 14px; bottom: 12px; color: var(--faint); font-size: 12px; }
+.empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--mute); text-align: center; padding: 24px; }
+.empty code { background: var(--panel); padding: 2px 6px; border-radius: 4px; }
+#pane { width: 0; overflow: hidden; border-left: 1px solid var(--line); background: var(--bg); transition: width .18s ease; }
+#pane.open { width: 440px; overflow: auto; }
+.note { padding: 22px 26px 40px; }
+.note h1 { font-size: 21px; line-height: 1.3; margin: 0 0 6px; }
+.meta { color: var(--mute); font-size: 12px; margin-bottom: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+.close { float: right; border: 0; background: none; color: var(--mute); font-size: 18px; cursor: pointer; margin: -4px -8px 0 0; }
+.chunk { margin: 0 0 14px; white-space: pre-wrap; word-wrap: break-word; }
+.role { display: block; font-size: 11px; color: var(--mute); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px; }
+.role.user { color: var(--accent); }
+h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: var(--mute); margin: 26px 0 8px; font-weight: 600; }
+.fact { border-left: 2px solid var(--accent); padding: 4px 0 4px 10px; margin: 0 0 10px; }
+.fact.old { border-color: var(--faint); color: var(--mute); }
+.fact .k { font-size: 11px; color: var(--mute); font-family: ui-monospace, Menlo, monospace; }
+.fact .acts { margin-top: 4px; display: flex; gap: 10px; }
+.fact .acts button, .chip { border: 0; background: none; color: var(--mute); font: inherit; font-size: 12px; cursor: pointer; padding: 0; }
+.fact .acts button:hover, .chip:hover { color: var(--accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px 12px; }
+.chip { color: var(--text); text-align: left; }
+.chip::before { content: "↳ "; color: var(--mute); }
+textarea { width: 100%; min-height: 70px; background: var(--panel); color: var(--text); border: 1px solid var(--line);
+  border-radius: 6px; padding: 8px; font: inherit; }
+.err { color: #ff5c5c; padding: 10px 16px; font-size: 12px; }
+@media (max-width: 760px) {
+  #app { grid-template-columns: 1fr; grid-template-rows: 46vh 1fr; }
+  aside { grid-row: 2; border-right: 0; border-top: 1px solid var(--line); }
+  main { grid-row: 1; }
+  #pane.open { position: fixed; inset: 0; width: 100%; z-index: 5; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside>
+    <div class="brand"><i></i>open-memory</div>
+    <div class="stats" id="stats">loading…</div>
+    <div class="search"><input id="q" placeholder="Search memories" autocomplete="off"></div>
+    <div class="tabs"><button data-t="notes" class="on">Notes</button><button data-t="facts">Facts</button></div>
+    <div class="list" id="list"></div>
+    <div class="err" id="err" hidden></div>
+  </aside>
+  <main>
+    <canvas id="c"></canvas>
+    <div class="legend">
+      <span style="--c:var(--node)">note</span><span style="--c:var(--conv)">conversation</span>
+      <span style="--c:var(--accent)">fact</span><span style="--c:var(--faint)">replaced fact</span>
+    </div>
+    <div class="hint">drag to move · scroll to zoom · click to open</div>
+    <div class="empty" id="empty" hidden><div>No memories yet.<br><br><code>open-memory add "my first memory"</code></div></div>
+  </main>
+  <div id="pane"></div>
+</div>
+<script>
+if (new URLSearchParams(location.search).has("light")) document.documentElement.classList.add("light");
+const $ = s => document.querySelector(s);
+const showErr = m => { const e = $("#err"); e.hidden = false; e.textContent = m; };
+addEventListener("error", e => { if (!/ResizeObserver/.test(e.message)) showErr(e.message); });
+addEventListener("unhandledrejection", e => showErr(String(e.reason && e.reason.message || e.reason)));
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const day = d => d ? String(d).slice(0, 10) : "";
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let G = {nodes: [], edges: []}, byId = {}, nbrs = {}, tab = "notes", selected = null, hits = null;
+
+async function api(path, body) {
+  const r = await fetch(path, body ? {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)} : {});
+  const j = await r.json();
+  if (!r.ok || j.error) { const e = $("#err"); e.hidden = false; e.textContent = j.error || r.statusText; throw new Error(j.error); }
+  $("#err").hidden = true;
+  return j;
+}
+
+// ---------------------------------------------------------------- data
+async function load(keepView) {
+  const g = await api("/api/graph");
+  const old = byId;
+  G = g; byId = {}; nbrs = {};
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  for (const n of G.nodes) {
+    const o = old[n.id];
+    const a = Math.random() * 6.283, d = 40 + Math.random() * 160;
+    Object.assign(n, o ? {x: o.x, y: o.y, vx: 0, vy: 0} : {x: Math.cos(a) * d, y: Math.sin(a) * d, vx: 0, vy: 0});
+    n.r = n.type === "fact" ? 5 : 6.5 + Math.min(9, Math.sqrt(n.size || 1) * 1.6);
+    byId[n.id] = n; nbrs[n.id] = new Set();
+  }
+  G.edges = G.edges.filter(e => byId[e.a] && byId[e.b]);
+  for (const e of G.edges) { nbrs[e.a].add(e.b); nbrs[e.b].add(e.a); }
+  const s = G.stats || {};
+  $("#stats").textContent = `${s.sources ?? 0} notes · ${s.chunks ?? 0} passages · ${s.facts ?? 0} facts`;
+  $("#empty").hidden = G.nodes.length > 0;
+  heat = 1;
+  if (!Object.keys(old).length) { for (let i = 0; i < 350; i++) tick(); heat = 0.15; fit(); }
+  renderList();
+}
+
+function renderList() {
+  const L = $("#list"); let html = "";
+  let nodes = G.nodes.filter(n => tab === "facts" ? n.type === "fact" : n.type !== "fact");
+  if (hits) nodes = nodes.filter(n => hits.has(n.id)).sort((a, b) => hits.get(a.id) - hits.get(b.id));
+  else nodes.sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+  if (tab === "facts" && !hits) {
+    const groups = {};
+    for (const n of nodes) (groups[n.key || "(no key)"] ??= []).push(n);
+    for (const k of Object.keys(groups).sort()) {
+      html += `<div class="group">${esc(k)}</div>` + groups[k].map(item).join("");
+    }
+  } else html = nodes.map(item).join("") || `<div class="group">${hits ? "no matches" : "empty"}</div>`;
+  L.innerHTML = html;
+  L.querySelectorAll(".item").forEach(el => el.onclick = () => open(el.dataset.id));
+}
+function item(n) {
+  const c = n.type === "fact" ? (n.current ? "var(--accent)" : "var(--faint)") : n.type === "conversation" ? "var(--conv)" : "var(--node)";
+  return `<div class="item ${n.id === selected ? "on" : ""} ${n.type === "fact" && !n.current ? "old" : ""}" data-id="${esc(n.id)}">
+    <span class="dot" style="background:${c}"></span><span class="t">${esc(n.label)}</span><span class="d">${day(n.date)}</span></div>`;
+}
+
+// ---------------------------------------------------------------- note pane
+async function open(ref) {
+  selected = ref; renderList(); history.replaceState(null, "", "#" + ref);
+  const n = await api("/api/note?ref=" + encodeURIComponent(ref));
+  const P = $("#pane"); P.classList.add("open");
+  const links = [...(nbrs[ref] || [])].map(id => byId[id]).filter(Boolean);
+  let h = `<div class="note"><button class="close" title="close">×</button>`;
+  if (n.kind === "fact") {
+    const f = n.fact;
+    h += `<h1>${esc(f.text)}</h1><div class="meta"><span>${esc(f.key || "no key")}</span>
+      <span>${f.valid_to ? "true " + day(f.valid_from) + " → " + day(f.valid_to) : "true since " + day(f.valid_from)}</span><span>${esc(f.origin)}</span></div>`;
+    h += `<h2>History</h2>` + n.history.map(x => factHtml(x)).join("");
+  } else {
+    h += `<h1>${esc(n.title)}</h1><div class="meta"><span>${esc(n.kind)}</span><span>${day(n.date) || "no date"}</span><span>saved ${day(n.recorded)}</span></div>`;
+    h += n.chunks.map(c => c.role === "doc" ? `<div class="chunk">${esc(c.text)}</div>` :
+      c.text.split(/\n(?=\[(?:user|assistant)\] )/).map(t => {
+        const m = t.match(/^\[(user|assistant)\] ([\s\S]*)$/);
+        return m ? `<div class="chunk"><div class="role ${m[1]}">${m[1] === "user" ? "you" : "assistant"}</div>${esc(m[2])}</div>` : `<div class="chunk">${esc(t)}</div>`;
+      }).join("")).join("");
+    if (n.facts.length) h += `<h2>Facts from this</h2>` + n.facts.map(x => factHtml(x)).join("");
+  }
+  if (links.length) h += `<h2>Linked</h2><div class="chips">` + links.map(l => `<button class="chip" data-id="${esc(l.id)}">${esc(l.label)}</button>`).join("") + `</div>`;
+  if (n.kind !== "fact") h += `<h2>&nbsp;</h2><div class="acts"><button class="chip" data-forget="${esc(ref)}" style="color:var(--mute)">Forget this note</button></div>`;
+  P.innerHTML = h + `</div>`;
+  P.querySelector(".close").onclick = () => { P.classList.remove("open"); selected = null; history.replaceState(null, "", location.pathname + location.search); renderList(); };
+  P.querySelectorAll(".chip[data-id]").forEach(b => b.onclick = () => open(b.dataset.id));
+  P.querySelectorAll("[data-forget]").forEach(b => b.onclick = () => forget(b.dataset.forget));
+  P.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => edit(+b.dataset.edit, b));
+}
+function factHtml(f) {
+  const old = !!f.valid_to;
+  return `<div class="fact ${old ? "old" : ""}"><div>${esc(f.text)}</div>
+    <div class="k">${esc(f.key || "")} · ${old ? day(f.valid_from) + " → " + day(f.valid_to) : "since " + day(f.valid_from)}</div>
+    <div class="acts"><button data-edit="${f.id}">Edit</button><button data-forget="fact:${f.id}">Forget</button></div></div>`;
+}
+async function edit(id, btn) {
+  const box = btn.closest(".fact"), txt = box.firstElementChild.textContent;
+  box.innerHTML = `<textarea>${esc(txt)}</textarea><div class="acts"><button>Save</button><button>Cancel</button></div>`;
+  const [save, cancel] = box.querySelectorAll("button");
+  cancel.onclick = () => open(selected);
+  save.onclick = async () => { const r = await api("/api/edit", {id, text: box.querySelector("textarea").value}); await load(); open("fact:" + r.fact); };
+}
+async function forget(ref) {
+  if (!confirm("Forget this? It disappears from search and from this view. The audit log keeps a record that it happened.")) return;
+  await api("/api/forget", {ref}); $("#pane").classList.remove("open"); selected = null; await load();
+}
+
+// ---------------------------------------------------------------- search
+let timer;
+$("#q").oninput = e => {
+  clearTimeout(timer);
+  const q = e.target.value.trim();
+  timer = setTimeout(async () => {
+    if (!q) { hits = null; renderList(); return; }
+    const r = await api("/api/search?q=" + encodeURIComponent(q));
+    hits = new Map(); let i = 0;
+    for (const f of r.facts) hits.set("fact:" + f.id, i++);
+    for (const c of r.chunks) if (!hits.has("source:" + c.source)) hits.set("source:" + c.source, i++);
+    if (r.facts.length && !r.chunks.length && tab === "notes") setTab("facts");
+    renderList();
+  }, 180);
+};
+function setTab(t) { tab = t; document.querySelectorAll(".tabs button").forEach(b => b.classList.toggle("on", b.dataset.t === t)); renderList(); }
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => setTab(b.dataset.t));
+
+// ---------------------------------------------------------------- graph
+const canvas = $("#c"), ctx = canvas.getContext("2d");
+let view = {x: 0, y: 0, k: 1}, heat = 1, hover = null, dragNode = null, panning = null, moved = false;
+function size() {
+  const d = devicePixelRatio || 1;
+  canvas.width = canvas.clientWidth * d; canvas.height = canvas.clientHeight * d;
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+}
+new ResizeObserver(() => requestAnimationFrame(size)).observe(canvas);
+const toWorld = (px, py) => ({x: (px - canvas.clientWidth / 2 - view.x) / view.k, y: (py - canvas.clientHeight / 2 - view.y) / view.k});
+function nodeAt(px, py) {
+  const p = toWorld(px, py); let best = null, bd = 1e9;
+  for (const n of G.nodes) { const d = (n.x - p.x) ** 2 + (n.y - p.y) ** 2; if (d < (n.r + 6 / view.k) ** 2 && d < bd) { bd = d; best = n; } }
+  return best;
+}
+function tick() {
+  const N = G.nodes;
+  {
+    for (let i = 0; i < N.length; i++) {
+      const a = N[i];
+      for (let j = i + 1; j < N.length; j++) {
+        const b = N[j]; let dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy + 0.01;
+        if (d2 > 90000) continue;
+        const f = 900 / d2; dx *= f; dy *= f;
+        a.vx += dx; a.vy += dy; b.vx -= dx; b.vy -= dy;
+      }
+      a.vx -= a.x * 0.004; a.vy -= a.y * 0.004;
+    }
+    for (const e of G.edges) {
+      const a = byId[e.a], b = byId[e.b], dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const len = e.kind === "from" ? 38 : e.kind === "replaced" ? 30 : 90, f = (d - len) * (e.kind === "related" ? 0.012 : 0.03);
+      const fx = dx / d * f, fy = dy / d * f; a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
+    }
+    for (const n of N) {
+      if (n === dragNode) { n.vx = n.vy = 0; continue; }
+      n.vx *= 0.82; n.vy *= 0.82;
+      const sp = Math.hypot(n.vx, n.vy), cap = 12 * heat + 0.5;
+      if (sp > cap) { n.vx *= cap / sp; n.vy *= cap / sp; }
+      n.x += n.vx * heat; n.y += n.vy * heat;
+    }
+    heat *= 0.994;
+  }
+}
+function step() { if (heat > 0.002) tick(); draw(); requestAnimationFrame(step); }
+function fit() {
+  if (!G.nodes.length) return;
+  const xs = G.nodes.map(n => n.x), ys = G.nodes.map(n => n.y);
+  const w = Math.max(...xs) - Math.min(...xs) + 80, h = Math.max(...ys) - Math.min(...ys) + 80;
+  view.k = Math.min(2.2, Math.max(0.2, Math.min(canvas.clientWidth / w, canvas.clientHeight / h) * 0.9));
+  view.x = -(Math.max(...xs) + Math.min(...xs)) / 2 * view.k; view.y = -(Math.max(...ys) + Math.min(...ys)) / 2 * view.k;
+}
+function draw() {
+  const W = canvas.clientWidth, H = canvas.clientHeight;
+  ctx.clearRect(0, 0, W, H);
+  ctx.save(); ctx.translate(W / 2 + view.x, H / 2 + view.y); ctx.scale(view.k, view.k);
+  const focus = hover || (selected && byId[selected]);
+  const lit = focus ? new Set([focus.id, ...nbrs[focus.id]]) : null;
+  const C = {edge: css("--edge"), hot: css("--edge-hot"), node: css("--node"), conv: css("--conv"), acc: css("--accent"), faint: css("--faint"), text: css("--text"), mute: css("--mute"), bg: css("--bg")};
+  for (const e of G.edges) {
+    const a = byId[e.a], b = byId[e.b], on = lit && lit.has(a.id) && lit.has(b.id) && (a === focus || b === focus);
+    ctx.strokeStyle = on ? C.hot : C.edge; ctx.lineWidth = (on ? 1.6 : 1) / view.k;
+    ctx.setLineDash(e.kind === "replaced" ? [4 / view.k, 3 / view.k] : []);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  for (const n of G.nodes) {
+    const dim = (lit && !lit.has(n.id)) || (hits && !hits.has(n.id));
+    ctx.globalAlpha = dim ? 0.18 : 1;
+    ctx.fillStyle = n.type === "fact" ? (n.current ? C.acc : C.faint) : n.type === "conversation" ? C.conv : C.node;
+    ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, 7); ctx.fill();
+    if (n.id === selected) { ctx.strokeStyle = C.acc; ctx.lineWidth = 2 / view.k; ctx.beginPath(); ctx.arc(n.x, n.y, n.r + 3 / view.k, 0, 7); ctx.stroke(); }
+  }
+  ctx.globalAlpha = 1;
+  const fs = 12 / view.k; ctx.font = `${fs}px -apple-system, Inter, sans-serif`; ctx.textAlign = "center";
+  for (const n of G.nodes) {
+    const show = (lit && lit.has(n.id)) || (hits && hits.has(n.id)) || ((G.nodes.length < 80 || view.k > 1.6) && n.type !== "fact") || view.k > 2.6;
+    if (!show) continue;
+    const t = n.label.length > 42 ? n.label.slice(0, 40) + "…" : n.label;
+    ctx.fillStyle = C.bg; ctx.globalAlpha = 0.75; const w = ctx.measureText(t).width;
+    ctx.fillRect(n.x - w / 2 - 3 / view.k, n.y + n.r + 3 / view.k, w + 6 / view.k, fs * 1.35);
+    ctx.globalAlpha = 1; ctx.fillStyle = n === focus ? C.text : C.mute;
+    ctx.fillText(t, n.x, n.y + n.r + fs + 3 / view.k);
+  }
+  ctx.restore();
+}
+canvas.onmousemove = e => {
+  const r = canvas.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
+  if (dragNode) { const p = toWorld(px, py); dragNode.x = p.x; dragNode.y = p.y; heat = Math.max(heat, 0.3); moved = true; return; }
+  if (panning) { view.x = panning.vx + (e.clientX - panning.x); view.y = panning.vy + (e.clientY - panning.y); moved = true; return; }
+  hover = nodeAt(px, py); canvas.style.cursor = hover ? "pointer" : "grab";
+};
+canvas.onmousedown = e => {
+  const r = canvas.getBoundingClientRect(); moved = false;
+  dragNode = nodeAt(e.clientX - r.left, e.clientY - r.top);
+  if (!dragNode) panning = {x: e.clientX, y: e.clientY, vx: view.x, vy: view.y};
+  canvas.classList.add("drag");
+};
+addEventListener("mouseup", () => {
+  if (dragNode && !moved) open(dragNode.id);
+  dragNode = null; panning = null; canvas.classList.remove("drag");
+});
+canvas.onwheel = e => {
+  e.preventDefault();
+  const r = canvas.getBoundingClientRect(), px = e.clientX - r.left - canvas.clientWidth / 2, py = e.clientY - r.top - canvas.clientHeight / 2;
+  const k = Math.min(6, Math.max(0.15, view.k * Math.exp(-e.deltaY * 0.0015)));
+  view.x = px - (px - view.x) * k / view.k; view.y = py - (py - view.y) * k / view.k; view.k = k;
+};
+canvas.onmouseleave = () => { hover = null; };
+// touch: one finger pans or drags, tap opens
+canvas.ontouchstart = e => { const t = e.touches[0]; canvas.onmousedown({clientX: t.clientX, clientY: t.clientY}); };
+canvas.ontouchmove = e => { e.preventDefault(); const t = e.touches[0]; canvas.onmousemove({clientX: t.clientX, clientY: t.clientY}); };
+canvas.ontouchend = () => dispatchEvent(new Event("mouseup"));
+
+size(); load().then(() => { requestAnimationFrame(step); if (location.hash.length > 1) open(decodeURIComponent(location.hash.slice(1))); });
+</script>
+</body>
+</html>
