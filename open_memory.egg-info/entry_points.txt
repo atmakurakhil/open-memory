@@ -1,3 +1,0 @@
-[console_scripts]
-open-memory = open_memory.cli:main
-open-memory-mcp = open_memory.mcp_server:main
